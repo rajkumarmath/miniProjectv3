@@ -355,6 +355,11 @@ class AdvisorAgent(BaseAgent):
             "confidence": self.confidence
         })
 
+    def reset(self):
+        self.productivity_score = 100
+        self.recommendation = "Add a task to get started!"
+        self.confidence = 100
+
 class BehaviorAnalysisAgent(BaseAgent):
     def __init__(self):
         super().__init__("BehaviorAnalysisAgent", "Analyzer", "Calm, observant, psychologically analytical. 🧠")

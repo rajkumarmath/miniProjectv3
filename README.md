@@ -2,6 +2,10 @@
 
 A fully functional, deterministic multi-agent system powered by 8 distinct AI personas running via a custom message bus. No LLMs, no external APIs.
 
+## Live Deployment
+- **Frontend**: https://miniprojectv3.vercel.app/
+- **Backend API**: https://miniprojectv3-2dfx.onrender.com
+
 ## Features
 - **8 Autonomous Agents**: Intake, Prioritizer, Scheduler, Decomposer, ProcrastinationDetector, Reminder, Focus, and Advisor.
 - **Pure Deterministic Logic**: Everything runs strictly locally.

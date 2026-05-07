@@ -9,15 +9,15 @@ import ControlPanel from './components/ControlPanel';
 import DigitalMindMirror from './components/DigitalMindMirror';
 import useSystemStore from './store';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, Volume2, VolumeX, Settings, Trash2 } from 'lucide-react';
+import { Mic, Volume2, VolumeX, Settings, Trash2, Bell, BellOff } from 'lucide-react';
 import { API_BASE_URL, WS_BASE_URL } from './config';
 
 export default function App() {
   const {
     systemState, messages, schedule, emergencyMode, reminders, cognitiveProfile,
-    voiceEnabled, voiceMode, setSystemState, addMessage, setSchedule, setAdvisorUpdate,
+    voiceEnabled, voiceMode, notificationsEnabled, setSystemState, addMessage, setSchedule, setAdvisorUpdate,
     setEmergencyMode, addReminder, removeReminder, setCognitiveProfile, setSimulationUpdate,
-    setVoiceEnabled, setVoiceMode, clearState
+    setVoiceEnabled, setVoiceMode, setNotificationsEnabled, clearState
   } = useSystemStore();
 
   const [scanActive, setScanActive] = useState(false);
@@ -80,7 +80,8 @@ export default function App() {
       const data = JSON.parse(e.data);
       addReminder(data);
       if (voiceEnabled) speak(data.text);
-      if (window.Notification && Notification.permission === "granted") {
+      
+      if (notificationsEnabled && window.Notification && Notification.permission === "granted") {
         new Notification("Agent Reminder", { body: data.text });
       }
     });
@@ -200,13 +201,23 @@ export default function App() {
           >
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 border-b border-white/5 pb-2">Voice AI Settings</h3>
             
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-slate-300">Voice Assistant</span>
               <button 
                 onClick={() => setVoiceEnabled(!voiceEnabled)}
                 className={`p-1.5 rounded-lg transition-colors ${voiceEnabled ? 'bg-cyan-500/20 text-cyan-400' : 'bg-slate-800 text-slate-500'}`}
               >
                 {voiceEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+              </button>
+            </div>
+            
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-sm text-slate-300">Push Notifications</span>
+              <button 
+                onClick={() => setNotificationsEnabled(!notificationsEnabled)}
+                className={`p-1.5 rounded-lg transition-colors ${notificationsEnabled ? 'bg-cyan-500/20 text-cyan-400' : 'bg-slate-800 text-slate-500'}`}
+              >
+                {notificationsEnabled ? <Bell size={16} /> : <BellOff size={16} />}
               </button>
             </div>
 

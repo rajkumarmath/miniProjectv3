@@ -11,6 +11,7 @@ const useSystemStore = create((set) => ({
   simulationUpdate: null,
   voiceEnabled: true,
   voiceMode: 'calm', // calm, motivating, strict
+  notificationsEnabled: true,
 
   setSystemState: (state) => set({ systemState: state }),
   addMessage: (msg) => set((state) => ({ messages: [...state.messages.slice(-99), msg] })),
@@ -23,6 +24,7 @@ const useSystemStore = create((set) => ({
   setSimulationUpdate: (sim) => set({ simulationUpdate: sim }),
   setVoiceEnabled: (enabled) => set({ voiceEnabled: enabled }),
   setVoiceMode: (mode) => set({ voiceMode: mode }),
+  setNotificationsEnabled: (enabled) => set({ notificationsEnabled: enabled }),
   clearState: () => set({ 
     systemState: { tick: 0, agents: [] }, 
     messages: [], 
@@ -30,7 +32,8 @@ const useSystemStore = create((set) => ({
     reminders: [], 
     cognitiveProfile: null, 
     simulationUpdate: null, 
-    advisorUpdate: { score: 100, recommendation: '', confidence: 100 } 
+    advisorUpdate: { score: 100, recommendation: '', confidence: 100 },
+    emergencyMode: false
   })
 }));
 
