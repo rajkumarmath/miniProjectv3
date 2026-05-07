@@ -46,6 +46,23 @@ class IntakeAgent(BaseAgent):
                     elif "health" in raw_text or "workout" in raw_text or "gym" in raw_text or "sleep" in raw_text or "water" in raw_text: category = "health"
                     elif "learn" in raw_text or "study" in raw_text or "read" in raw_text or "exam" in raw_text or "exxam" in raw_text: category = "learning"
 
+                    time_match = re.search(r'\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b', raw_text)
+                    preferred_slot = None
+                    if time_match:
+                        hour = int(time_match.group(1))
+                        ampm = time_match.group(3)
+                        if ampm == 'pm' and hour < 12:
+                            hour += 12
+                        elif ampm == 'am' and hour == 12:
+                            hour = 0
+                        
+                        if hour < 12:
+                            preferred_slot = "Morning"
+                        elif hour < 17:
+                            preferred_slot = "Afternoon"
+                        else:
+                            preferred_slot = "Evening"
+
                     parsed = {
                         "task_id": str(uuid.uuid4()),
                         "title": raw_text.capitalize(),
@@ -55,7 +72,8 @@ class IntakeAgent(BaseAgent):
                         "category": category,
                         "status": "new",
                         "ticks_ignored": 0,
-                        "defer_count": 0
+                        "defer_count": 0,
+                        "preferred_slot": preferred_slot
                     }
                     self.memory.append({"action": "parsed", "data": parsed})
                     await self.send("PrioritizerAgent", "parsed_input", parsed)
@@ -148,7 +166,12 @@ class SchedulerAgent(BaseAgent):
                 self.state = AgentState.THINKING
                 task = msg.content if msg.msg_type == "schedule_request" else msg.content.get("task")
                 
-                slot = "Morning" if task["effort"] == "high" else ("Afternoon" if task["effort"] == "medium" else "Evening")
+                # Check for preferred slot from time parsing
+                preferred = task.get("preferred_slot")
+                if preferred:
+                    slot = preferred
+                else:
+                    slot = "Morning" if task["effort"] == "high" else ("Afternoon" if task["effort"] == "medium" else "Evening")
                 
                 # Check for burnout detector overrides
                 if hasattr(self, "burnout_limit") and task["effort"] == "high" and self.burnout_limit:
@@ -340,13 +363,19 @@ class AdvisorAgent(BaseAgent):
                 else:
                     self.recommendation = "You're all caught up! Great job!"
                     
-            if self.productivity_score < 40:
-                self.confidence = 40.0
-                await self.send("broadcast", "emergency_mode", {"active": True})
-            else:
-                self.confidence = self.productivity_score
-                await self.send("broadcast", "emergency_mode", {"active": False})
-                
+            elif msg.msg_type == "energy_update":
+                level = msg.content.get("level", 3)
+                if level == 1:
+                    self.productivity_score = 20
+                    self.confidence = 20.0
+                    self.recommendation = "Energy critical! Mandatory break required."
+                    await self.send("broadcast", "emergency_mode", {"active": True})
+                elif level == 3:
+                    self.productivity_score = 100
+                    self.confidence = 100.0
+                    self.recommendation = "Energy is high! Let's crush those tasks!"
+                    await self.send("broadcast", "emergency_mode", {"active": False})
+                    
             self.inbox.remove(msg)
             
         await self.send("broadcast", "advisor_update", {

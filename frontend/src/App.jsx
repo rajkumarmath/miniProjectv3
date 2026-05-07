@@ -54,7 +54,7 @@ export default function App() {
         // Removed voice spam on every advisor update
       } else if (msg.msg_type === 'emergency_mode') {
         const state = useSystemStore.getState();
-        if (!state.emergencyMode && msg.content.active && state.voiceEnabled) {
+        if (!state.emergencyMode && msg.content.active && state.voiceEnabled && state.notificationsEnabled) {
            speak("Emergency mode activated. Burnout risk is critical. Please take a break immediately.", 0.9, 0.8);
         }
         setEmergencyMode(msg.content.active);

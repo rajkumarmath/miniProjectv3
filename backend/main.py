@@ -80,7 +80,7 @@ async def add_goal(req: GoalInput):
 
 @app.post("/energy")
 async def set_energy(req: EnergyInput):
-    msg = Message(sender="API", receiver="SchedulerAgent", msg_type="energy_update", content={"level": req.level})
+    msg = Message(sender="API", receiver="broadcast", msg_type="energy_update", content={"level": req.level})
     await message_bus.publish(msg)
     return {"status": "ok"}
 
