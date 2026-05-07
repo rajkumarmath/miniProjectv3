@@ -77,11 +77,13 @@ export default function App() {
 
     const eventSource = new EventSource(`${API_BASE_URL}/reminders`);
     eventSource.addEventListener('reminder', (e) => {
+      if (!notificationsEnabled) return;
+      
       const data = JSON.parse(e.data);
       addReminder(data);
       if (voiceEnabled) speak(data.text);
       
-      if (notificationsEnabled && window.Notification && Notification.permission === "granted") {
+      if (window.Notification && Notification.permission === "granted") {
         new Notification("Agent Reminder", { body: data.text });
       }
     });
@@ -183,7 +185,15 @@ export default function App() {
             <Trash2 size={18} />
           </button>
           <button 
+            onClick={() => setNotificationsEnabled(!notificationsEnabled)}
+            title="Toggle Notifications"
+            className={`p-2 rounded-full border transition-colors ${notificationsEnabled ? 'text-cyan-400 bg-cyan-500/20 border-cyan-500/30' : 'text-slate-500 bg-slate-800/50 border-white/5 hover:text-cyan-400'}`}
+          >
+            {notificationsEnabled ? <Bell size={18} /> : <BellOff size={18} />}
+          </button>
+          <button 
             onClick={() => setShowSettings(!showSettings)}
+            title="Voice Settings"
             className="text-slate-400 hover:text-cyan-400 transition-colors p-2 bg-slate-800/50 rounded-full border border-white/5"
           >
             <Settings size={18} />
@@ -201,23 +211,13 @@ export default function App() {
           >
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 border-b border-white/5 pb-2">Voice AI Settings</h3>
             
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-4">
               <span className="text-sm text-slate-300">Voice Assistant</span>
               <button 
                 onClick={() => setVoiceEnabled(!voiceEnabled)}
                 className={`p-1.5 rounded-lg transition-colors ${voiceEnabled ? 'bg-cyan-500/20 text-cyan-400' : 'bg-slate-800 text-slate-500'}`}
               >
                 {voiceEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
-              </button>
-            </div>
-            
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-sm text-slate-300">Push Notifications</span>
-              <button 
-                onClick={() => setNotificationsEnabled(!notificationsEnabled)}
-                className={`p-1.5 rounded-lg transition-colors ${notificationsEnabled ? 'bg-cyan-500/20 text-cyan-400' : 'bg-slate-800 text-slate-500'}`}
-              >
-                {notificationsEnabled ? <Bell size={16} /> : <BellOff size={16} />}
               </button>
             </div>
 
