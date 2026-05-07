@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-gray-200 antialiased overflow-hidden;
+  }
+}
+
+.custom-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scroll::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: #b026ff;
+  border-radius: 4px;
+}
+
+/* React Flow customizations */
+.react-flow__node {
+  border-radius: 8px;
+}
+.react-flow__edge-path {
+  stroke-width: 2;
+}

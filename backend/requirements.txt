@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+websockets
+sse-starlette
+pydantic
+google-genai
+python-dotenv
+aiosqlite
+apscheduler
