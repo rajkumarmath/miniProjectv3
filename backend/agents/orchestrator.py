@@ -37,12 +37,14 @@ class Orchestrator:
 
     async def start(self):
         self.running = True
+        await self._broadcast_state()
         asyncio.create_task(self._loop())
 
-    def pause(self):
+    async def pause(self):
         self.running = False
+        await self._broadcast_state()
 
-    def reset(self):
+    async def reset(self):
         self.tick_counter = 0
         # Reset agents
         for agent in self.agents:
@@ -50,6 +52,20 @@ class Orchestrator:
             agent.memory.clear()
             agent.state = agent.state.IDLE
         self.persistent_memory.clear()
+        await self._broadcast_state()
+
+    async def _broadcast_state(self):
+        state_msg = Message(
+            sender="Orchestrator",
+            receiver="broadcast",
+            msg_type="system_state",
+            content={
+                "tick": self.tick_counter,
+                "running": self.running,
+                "agents": [a.get_status() for a in self.agents]
+            }
+        )
+        await message_bus.publish(state_msg)
 
     def set_speed(self, speed: float):
         self.speed = speed
@@ -80,16 +96,7 @@ class Orchestrator:
                     await agent.think()
                     
                 # Broadcast state update for UI
-                state_msg = Message(
-                    sender="Orchestrator",
-                    receiver="broadcast",
-                    msg_type="system_state",
-                    content={
-                        "tick": self.tick_counter,
-                        "agents": [a.get_status() for a in self.agents]
-                    }
-                )
-                await message_bus.publish(state_msg)
+                await self._broadcast_state()
                 
             await asyncio.sleep(2.0 / self.speed)
 

@@ -92,16 +92,16 @@ async def control_system(req: ControlInput):
         if not orchestrator.running:
             await orchestrator.start()
     elif req.action == "pause":
-        orchestrator.pause()
+        await orchestrator.pause()
     elif req.action == "reset":
-        orchestrator.reset()
+        await orchestrator.reset()
     
     orchestrator.set_speed(req.speed)
     return {"status": "ok"}
 
 @app.post("/clear_data")
 async def clear_system_data():
-    orchestrator.reset()
+    await orchestrator.reset()
     await clear_db()
     # Let the frontend know so it can clear its state
     msg = Message(

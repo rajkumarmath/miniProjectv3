@@ -12,40 +12,54 @@ class IntakeAgent(BaseAgent):
         for msg in list(self.inbox):
             if msg.msg_type == "raw_input":
                 self.state = AgentState.THINKING
-                text = msg.content.get("text", "").lower()
+                original_text = msg.content.get("text", "")
+                text = original_text.lower()
                 req_type = msg.content.get("type", "task")
                 
-                # Deterministic Parsing
-                effort = "medium"
-                if "hard" in text or "difficult" in text or "big" in text: effort = "high"
-                elif "easy" in text or "quick" in text or "small" in text: effort = "low"
+                # Split paragraph into multiple tasks using regex
+                # Matches common conjunctions and punctuation to separate tasks
+                raw_tasks = [t.strip() for t in re.split(r'\b(?:and also|and then|then also|and|also|then|\.|;|,)\b', text) if len(t.strip()) > 4]
                 
-                deadline = 0 # today
-                if "tomorrow" in text: deadline = 1
-                elif "urgent" in text: deadline = 0
-                elif "someday" in text: deadline = None
-                else:
-                    match = re.search(r'in (\d+) days', text)
-                    if match: deadline = int(match.group(1))
-                
-                category = "personal"
-                if "work" in text or "meeting" in text or "code" in text: category = "work"
-                elif "health" in text or "workout" in text or "gym" in text: category = "health"
-                elif "learn" in text or "study" in text or "read" in text: category = "learning"
+                if not raw_tasks:
+                    raw_tasks = [text.strip()]
 
-                parsed = {
-                    "task_id": str(uuid.uuid4()),
-                    "title": msg.content.get("text"),
-                    "type": req_type,
-                    "deadline": deadline,
-                    "effort": effort,
-                    "category": category,
-                    "status": "new",
-                    "ticks_ignored": 0,
-                    "defer_count": 0
-                }
-                self.memory.append({"action": "parsed", "data": parsed})
-                await self.send("PrioritizerAgent", "parsed_input", parsed)
+                for raw_text in raw_tasks:
+                    # Ignore meaningless fillers
+                    if raw_text in ["i have to", "i need to", "i want to", "have to", "need to"]:
+                        continue
+
+                    # Deterministic Parsing
+                    effort = "medium"
+                    if "hard" in raw_text or "difficult" in raw_text or "big" in raw_text: effort = "high"
+                    elif "easy" in raw_text or "quick" in raw_text or "small" in raw_text: effort = "low"
+                    
+                    deadline = 0 # today
+                    if "tomorrow" in raw_text or "tomarrow" in raw_text: deadline = 1
+                    elif "urgent" in raw_text: deadline = 0
+                    elif "someday" in raw_text: deadline = None
+                    else:
+                        match = re.search(r'in (\d+) days', raw_text)
+                        if match: deadline = int(match.group(1))
+                    
+                    category = "personal"
+                    if "work" in raw_text or "meeting" in raw_text or "code" in raw_text or "report" in raw_text or "project" in raw_text: category = "work"
+                    elif "health" in raw_text or "workout" in raw_text or "gym" in raw_text or "sleep" in raw_text or "water" in raw_text: category = "health"
+                    elif "learn" in raw_text or "study" in raw_text or "read" in raw_text or "exam" in raw_text or "exxam" in raw_text: category = "learning"
+
+                    parsed = {
+                        "task_id": str(uuid.uuid4()),
+                        "title": raw_text.capitalize(),
+                        "type": req_type,
+                        "deadline": deadline,
+                        "effort": effort,
+                        "category": category,
+                        "status": "new",
+                        "ticks_ignored": 0,
+                        "defer_count": 0
+                    }
+                    self.memory.append({"action": "parsed", "data": parsed})
+                    await self.send("PrioritizerAgent", "parsed_input", parsed)
+                    
             self.inbox.remove(msg)
         self.state = AgentState.IDLE
 
