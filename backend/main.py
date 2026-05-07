@@ -37,7 +37,7 @@ connected_clients = set()
 # Store reminder queue for SSE
 reminder_queue = asyncio.Queue()
 
-from db import init_db
+from db import init_db, clear_db
 
 @app.on_event("startup")
 async def startup_event():
@@ -97,6 +97,20 @@ async def control_system(req: ControlInput):
         orchestrator.reset()
     
     orchestrator.set_speed(req.speed)
+    return {"status": "ok"}
+
+@app.post("/clear_data")
+async def clear_system_data():
+    orchestrator.reset()
+    await clear_db()
+    # Let the frontend know so it can clear its state
+    msg = Message(
+        sender="System",
+        receiver="broadcast",
+        msg_type="data_cleared",
+        content={"message": "All data has been cleared"}
+    )
+    await message_bus.publish(msg)
     return {"status": "ok"}
 
 @app.websocket("/ws")

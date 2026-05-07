@@ -9,7 +9,7 @@ import ControlPanel from './components/ControlPanel';
 import DigitalMindMirror from './components/DigitalMindMirror';
 import useSystemStore from './store';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, Volume2, VolumeX, Settings } from 'lucide-react';
+import { Mic, Volume2, VolumeX, Settings, Trash2 } from 'lucide-react';
 import { API_BASE_URL, WS_BASE_URL } from './config';
 
 export default function App() {
@@ -17,7 +17,7 @@ export default function App() {
     systemState, messages, schedule, emergencyMode, reminders, cognitiveProfile,
     voiceEnabled, voiceMode, setSystemState, addMessage, setSchedule, setAdvisorUpdate,
     setEmergencyMode, addReminder, removeReminder, setCognitiveProfile, setSimulationUpdate,
-    setVoiceEnabled, setVoiceMode
+    setVoiceEnabled, setVoiceMode, clearState
   } = useSystemStore();
 
   const [scanActive, setScanActive] = useState(false);
@@ -64,6 +64,8 @@ export default function App() {
         setTimeout(() => setScanActive(false), 3000);
       } else if (msg.msg_type === 'simulation_update') {
         setSimulationUpdate(msg.content);
+      } else if (msg.msg_type === 'data_cleared') {
+        clearState();
       } else if (msg.msg_type !== 'tick' && msg.msg_type !== 'system_state') {
         addMessage(msg);
       }
@@ -106,6 +108,42 @@ export default function App() {
     synthRef.current.speak(utterance);
   };
 
+  const testVoice = (mode) => {
+    if (!synthRef.current || !voiceEnabled) return;
+    
+    // Resume audio context just in case browser requires gesture
+    if (synthRef.current.resume) synthRef.current.resume();
+    
+    synthRef.current.cancel(); // Stop any current speech
+    
+    const utterance = new SpeechSynthesisUtterance(`Voice mode is set to ${mode}.`);
+    if (femaleVoiceRef.current) utterance.voice = femaleVoiceRef.current;
+    
+    if (mode === 'calm') {
+      utterance.rate = 0.99; // Adjusted rate multiplier
+      utterance.pitch = 1.08; // Adjusted pitch
+    } else if (mode === 'strict') {
+      utterance.rate = 1.32;
+      utterance.pitch = 0.96;
+    } else {
+      utterance.rate = 1.1;
+      utterance.pitch = 1.2;
+    }
+    
+    synthRef.current.speak(utterance);
+  };
+
+  const handleClearData = async () => {
+    if (window.confirm("Are you sure you want to clear all data and start fresh?")) {
+      try {
+        await fetch(`${API_BASE_URL}/clear_data`, { method: 'POST' });
+        // The websocket will receive 'data_cleared' and call clearState()
+      } catch (err) {
+        console.error("Failed to clear data:", err);
+      }
+    }
+  };
+
   return (
     <div className={`h-screen w-screen flex flex-col p-4 gap-4 font-sans transition-colors duration-1000 overflow-hidden ${emergencyMode ? 'bg-red-950 text-red-50' : 'bg-slate-950 text-slate-200'}`}>
       
@@ -133,6 +171,13 @@ export default function App() {
         </div>
         
         <div className="flex items-center gap-4">
+          <button 
+            onClick={handleClearData}
+            title="Clear All Data"
+            className="text-red-400 hover:text-red-300 transition-colors p-2 bg-slate-800/50 rounded-full border border-red-500/20 hover:border-red-500/50 hover:bg-red-950/50"
+          >
+            <Trash2 size={18} />
+          </button>
           <button 
             onClick={() => setShowSettings(!showSettings)}
             className="text-slate-400 hover:text-cyan-400 transition-colors p-2 bg-slate-800/50 rounded-full border border-white/5"
@@ -168,7 +213,10 @@ export default function App() {
                 {['calm', 'motivating', 'strict'].map(mode => (
                   <button
                     key={mode}
-                    onClick={() => setVoiceMode(mode)}
+                    onClick={() => {
+                      setVoiceMode(mode);
+                      testVoice(mode);
+                    }}
                     className={`text-[10px] py-1.5 rounded-md border capitalize transition-all ${voiceMode === mode ? 'bg-purple-500/20 border-purple-500 text-purple-300' : 'bg-slate-800/50 border-white/5 text-slate-400 hover:border-white/20'}`}
                   >
                     {mode}

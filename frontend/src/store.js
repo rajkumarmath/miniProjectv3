@@ -22,7 +22,16 @@ const useSystemStore = create((set) => ({
   setCognitiveProfile: (profile) => set({ cognitiveProfile: profile }),
   setSimulationUpdate: (sim) => set({ simulationUpdate: sim }),
   setVoiceEnabled: (enabled) => set({ voiceEnabled: enabled }),
-  setVoiceMode: (mode) => set({ voiceMode: mode })
+  setVoiceMode: (mode) => set({ voiceMode: mode }),
+  clearState: () => set({ 
+    systemState: { tick: 0, agents: [] }, 
+    messages: [], 
+    schedule: { Morning: [], Afternoon: [], Evening: [] }, 
+    reminders: [], 
+    cognitiveProfile: null, 
+    simulationUpdate: null, 
+    advisorUpdate: { score: 100, recommendation: '', confidence: 100 } 
+  })
 }));
 
 export default useSystemStore;

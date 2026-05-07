@@ -98,3 +98,11 @@ async def get_tasks_by_status(status: str):
         async with db.execute("SELECT * FROM tasks WHERE status = ?", (status,)) as cursor:
             rows = await cursor.fetchall()
             return [dict(row) for row in rows]
+
+async def clear_db():
+    async with aiosqlite.connect(DB_PATH) as db:
+        await db.execute("DELETE FROM tasks")
+        await db.execute("DELETE FROM behavior_logs")
+        await db.execute("DELETE FROM user_profile")
+        await db.execute("INSERT INTO user_profile (id) VALUES (1)")
+        await db.commit()
