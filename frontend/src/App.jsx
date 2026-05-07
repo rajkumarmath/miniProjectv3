@@ -53,7 +53,8 @@ export default function App() {
         setAdvisorUpdate(msg.content);
         // Removed voice spam on every advisor update
       } else if (msg.msg_type === 'emergency_mode') {
-        if (!emergencyMode && msg.content.active && voiceEnabled) {
+        const state = useSystemStore.getState();
+        if (!state.emergencyMode && msg.content.active && state.voiceEnabled) {
            speak("Emergency mode activated. Burnout risk is critical. Please take a break immediately.", 0.9, 0.8);
         }
         setEmergencyMode(msg.content.active);
@@ -77,11 +78,12 @@ export default function App() {
 
     const eventSource = new EventSource(`${API_BASE_URL}/reminders`);
     eventSource.addEventListener('reminder', (e) => {
-      if (!notificationsEnabled) return;
+      const state = useSystemStore.getState();
+      if (!state.notificationsEnabled) return;
       
       const data = JSON.parse(e.data);
-      addReminder(data);
-      if (voiceEnabled) speak(data.text);
+      state.addReminder(data);
+      if (state.voiceEnabled) speak(data.text);
       
       if (window.Notification && Notification.permission === "granted") {
         new Notification("Agent Reminder", { body: data.text });
@@ -92,7 +94,7 @@ export default function App() {
       ws.close();
       eventSource.close();
     };
-  }, [voiceEnabled, emergencyMode]);
+  }, []); // Run only once on mount, state accessed via getState()
 
   const speak = (text, rate = 1.1, pitch = 1.2) => {
     if (!synthRef.current || !voiceEnabled) return;
