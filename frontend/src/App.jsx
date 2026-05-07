@@ -66,8 +66,11 @@ export default function App() {
         setSimulationUpdate(msg.content);
       } else if (msg.msg_type === 'data_cleared') {
         clearState();
-      } else if (msg.msg_type !== 'tick' && msg.msg_type !== 'system_state') {
-        addMessage(msg);
+      } else {
+        const noisyTypes = ['tick', 'system_state', 'schedule_updated', 'decompose_check', 'parsed_input', 'subtasks_created', 'cognitive_scan_started', 'energy_update'];
+        if (!noisyTypes.includes(msg.msg_type)) {
+          addMessage(msg);
+        }
       }
     };
     wsRef.current = ws;

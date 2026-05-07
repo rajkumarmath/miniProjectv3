@@ -1,9 +1,22 @@
 import React from 'react';
-import { CheckSquare, Clock, Tag } from 'lucide-react';
+import { CheckSquare, Clock, Tag, Check } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 export default function TaskPanel({ agents }) {
   const prioritizer = agents.find(a => a.name === 'PrioritizerAgent');
   const tasks = prioritizer?.task_queue || [];
+
+  const handleComplete = async (taskId) => {
+    try {
+      await fetch(`${API_BASE_URL}/complete_task`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ task_id: taskId })
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <div className="flex-1 bg-slate-900/40 border border-white/5 rounded-2xl flex flex-col overflow-hidden min-h-0 shadow-[0_0_20px_rgba(0,0,0,0.3)] backdrop-blur-md">
@@ -40,9 +53,18 @@ export default function TaskPanel({ agents }) {
             <div key={task.task_id} className={`bg-black/40 border border-white/10 p-3 rounded-xl flex flex-col gap-2 hover:border-cyan-500/30 transition-all ${isOverdue ? 'border-red-500/50 bg-red-950/20' : ''}`}>
               
               <div className="flex justify-between items-start gap-2">
-                <span className="font-semibold text-sm text-slate-200 leading-snug break-words">
-                  {task.title}
-                </span>
+                <div className="flex items-start gap-2">
+                  <button 
+                    onClick={() => handleComplete(task.task_id)}
+                    className="mt-0.5 w-4 h-4 rounded border border-white/20 flex items-center justify-center text-transparent hover:text-green-400 hover:border-green-400 transition-colors shrink-0"
+                    title="Complete Task"
+                  >
+                    <Check size={12} strokeWidth={3} />
+                  </button>
+                  <span className="font-semibold text-sm text-slate-200 leading-snug break-words">
+                    {task.title}
+                  </span>
+                </div>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${priorityColor}`}>
                   {priorityTag}
                 </span>

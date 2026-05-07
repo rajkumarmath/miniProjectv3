@@ -51,6 +51,8 @@ class Orchestrator:
             agent.inbox.clear()
             agent.memory.clear()
             agent.state = agent.state.IDLE
+            if hasattr(agent, "reset") and callable(agent.reset):
+                agent.reset()
         self.persistent_memory.clear()
         await self._broadcast_state()
 

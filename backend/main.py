@@ -32,6 +32,12 @@ class ControlInput(BaseModel):
     action: str
     speed: float = 1.0
 
+class TaskIdInput(BaseModel):
+    task_id: str
+
+class FocusInput(BaseModel):
+    action: str
+
 # Store connected websockets
 connected_clients = set()
 # Store reminder queue for SSE
@@ -75,6 +81,19 @@ async def add_goal(req: GoalInput):
 @app.post("/energy")
 async def set_energy(req: EnergyInput):
     msg = Message(sender="API", receiver="SchedulerAgent", msg_type="energy_update", content={"level": req.level})
+    await message_bus.publish(msg)
+    return {"status": "ok"}
+
+@app.post("/complete_task")
+async def complete_task(req: TaskIdInput):
+    msg = Message(sender="API", receiver="broadcast", msg_type="task_completed", content={"task_id": req.task_id})
+    await message_bus.publish(msg)
+    return {"status": "ok"}
+
+@app.post("/focus")
+async def toggle_focus(req: FocusInput):
+    msg_type = "start_focus" if req.action == "start" else "stop_focus"
+    msg = Message(sender="API", receiver="FocusAgent", msg_type=msg_type, content={})
     await message_bus.publish(msg)
     return {"status": "ok"}
 

@@ -4,7 +4,6 @@ import { API_BASE_URL } from '../config';
 
 export default function InputPanel() {
   const [text, setText] = useState('');
-  const [mode, setMode] = useState('task');
   const [energy, setEnergy] = useState(3);
   const [isListening, setIsListening] = useState(false);
   const [recognition, setRecognition] = useState(null);
@@ -48,7 +47,7 @@ export default function InputPanel() {
     if (!text.trim()) return;
 
     try {
-      await fetch(`${API_BASE_URL}/${mode}`, {
+      await fetch(`${API_BASE_URL}/task`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text })
@@ -80,23 +79,8 @@ export default function InputPanel() {
         </div>
       )}
       <h2 className="text-sm font-bold text-slate-200 mb-4 flex items-center gap-2 relative z-10 tracking-widest uppercase">
-        <Plus size={16} className="text-cyan-400" /> System Input
+        <Plus size={16} className="text-cyan-400" /> Add Task
       </h2>
-
-      <div className="flex gap-2 mb-4 bg-black/40 p-1 rounded-xl relative z-10 border border-white/5">
-        <button 
-          onClick={() => setMode('task')}
-          className={`flex-1 flex justify-center items-center gap-2 text-xs font-semibold py-2 rounded-lg transition-all ${mode === 'task' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'text-slate-500 hover:text-slate-300'}`}
-        >
-          <CheckCircle2 size={14} /> Task
-        </button>
-        <button 
-          onClick={() => setMode('goal')}
-          className={`flex-1 flex justify-center items-center gap-2 text-xs font-semibold py-2 rounded-lg transition-all ${mode === 'goal' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' : 'text-slate-500 hover:text-slate-300'}`}
-        >
-          <Target size={14} /> Goal
-        </button>
-      </div>
 
       <form onSubmit={handleSubmit} className="mb-5 relative z-10 flex gap-2">
         <div className="relative flex-1">

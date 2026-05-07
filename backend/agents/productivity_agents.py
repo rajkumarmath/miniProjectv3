@@ -114,11 +114,19 @@ class PrioritizerAgent(BaseAgent):
                     if t["task_id"] == tid:
                         t["priority_score"] = 25 # max priority
                         await self.send("AdvisorAgent", "alert", {"msg": f"Intervention! Maxed priority for {t['title']}."})
+                        
+            elif msg.msg_type == "task_completed":
+                tid = msg.content.get("task_id")
+                self.task_queue = [t for t in self.task_queue if t["task_id"] != tid]
 
             self.inbox.remove(msg)
             
         if self.state not in [AgentState.NEGOTIATING, AgentState.THINKING]:
             self.state = AgentState.IDLE
+
+    def reset(self):
+        self.task_queue = []
+        self.negotiation_rounds = {}
 
     def get_status(self) -> Dict[str, Any]:
         status = super().get_status()
@@ -164,10 +172,20 @@ class SchedulerAgent(BaseAgent):
             elif msg.msg_type == "burnout_alert":
                 self.burnout_limit = True
                 
+            elif msg.msg_type == "task_completed":
+                tid = msg.content.get("task_id")
+                for slot in self.schedule:
+                    self.schedule[slot] = [t for t in self.schedule[slot] if t["task_id"] != tid]
+                await self.send("broadcast", "schedule_updated", self.schedule)
+                
             self.inbox.remove(msg)
             
         if self.state not in [AgentState.NEGOTIATING, AgentState.THINKING]:
             self.state = AgentState.IDLE
+
+    def reset(self):
+        self.schedule = {"Morning": [], "Afternoon": [], "Evening": []}
+        self.energy = 3
 
 class DecomposerAgent(BaseAgent):
     def __init__(self):
@@ -179,12 +197,20 @@ class DecomposerAgent(BaseAgent):
                 self.state = AgentState.THINKING
                 task = msg.content
                 if task["effort"] == "high" or task["type"] == "goal":
-                    subtasks = [
-                        {"title": f"{task['title']} - Step 1: Research", "status": "new", "parent": task["task_id"]},
-                        {"title": f"{task['title']} - Step 2: Draft", "status": "new", "parent": task["task_id"]},
-                        {"title": f"{task['title']} - Step 3: Finalize", "status": "new", "parent": task["task_id"]}
-                    ]
-                    await self.send("broadcast", "subtasks_created", {"parent": task, "subtasks": subtasks})
+                    for step in ["Research", "Draft", "Finalize"]:
+                        subtask = {
+                            "task_id": str(uuid.uuid4()),
+                            "title": f"{task['title']} - Step: {step}",
+                            "type": "task",
+                            "deadline": task.get("deadline", 0),
+                            "effort": "low",
+                            "category": task.get("category", "work"),
+                            "status": "new",
+                            "ticks_ignored": 0,
+                            "defer_count": 0
+                        }
+                        await self.send("PrioritizerAgent", "parsed_input", subtask)
+                    await self.send("broadcast", "subtasks_created", {"parent": task})
                     self.state = AgentState.RESOLVED
             self.inbox.remove(msg)
         if self.state == AgentState.THINKING:

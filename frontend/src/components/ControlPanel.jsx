@@ -1,9 +1,24 @@
 import React from 'react';
-import { Play, Pause, RotateCcw } from 'lucide-react';
+import { Play, Pause, RotateCcw, Brain } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
 export default function ControlPanel({ systemState }) {
   const { tick, running } = systemState;
+  const [focusMode, setFocusMode] = React.useState(false);
+
+  const handleFocusToggle = async () => {
+    const newFocus = !focusMode;
+    setFocusMode(newFocus);
+    try {
+      await fetch(`${API_BASE_URL}/focus`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: newFocus ? 'start' : 'stop' })
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const handleControl = async (action, speed = 1.0) => {
     try {
@@ -51,6 +66,16 @@ export default function ControlPanel({ systemState }) {
           title="Reset"
         >
           <RotateCcw size={16} />
+        </button>
+      </div>
+      
+      <div className="flex gap-1 border-l border-white/10 pl-2">
+        <button 
+          onClick={handleFocusToggle}
+          className={`p-1.5 rounded-lg transition-colors flex items-center gap-1 ${focusMode ? 'text-purple-400 bg-purple-500/20 shadow-[0_0_10px_rgba(168,85,247,0.4)]' : 'text-slate-500 hover:text-purple-400 hover:bg-slate-800'}`}
+          title="Toggle Deep Focus"
+        >
+          <Brain size={16} className={focusMode ? 'animate-pulse' : ''} />
         </button>
       </div>
     </div>
