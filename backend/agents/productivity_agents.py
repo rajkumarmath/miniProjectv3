@@ -46,14 +46,18 @@ class IntakeAgent(BaseAgent):
                     elif "health" in raw_text or "workout" in raw_text or "gym" in raw_text or "sleep" in raw_text or "water" in raw_text: category = "health"
                     elif "learn" in raw_text or "study" in raw_text or "read" in raw_text or "exam" in raw_text or "exxam" in raw_text: category = "learning"
 
-                    time_match = re.search(r'\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b', raw_text)
                     preferred_slot = None
+                    if "morning" in raw_text: preferred_slot = "Morning"
+                    elif "afternoon" in raw_text: preferred_slot = "Afternoon"
+                    elif "evening" in raw_text or "night" in raw_text: preferred_slot = "Evening"
+
+                    time_match = re.search(r'\b(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.|a|p)\b', raw_text)
                     if time_match:
                         hour = int(time_match.group(1))
-                        ampm = time_match.group(3)
-                        if ampm == 'pm' and hour < 12:
+                        ampm = time_match.group(3).lower()
+                        if ampm.startswith('p') and hour < 12:
                             hour += 12
-                        elif ampm == 'am' and hour == 12:
+                        elif ampm.startswith('a') and hour == 12:
                             hour = 0
                         
                         if hour < 12:
