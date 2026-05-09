@@ -11,6 +11,7 @@ import useSystemStore from './store';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mic, Volume2, VolumeX, Settings, Trash2, Bell, BellOff } from 'lucide-react';
 import { API_BASE_URL, WS_BASE_URL } from './config';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 export default function App() {
   const {
@@ -300,6 +301,8 @@ export default function App() {
           ))}
         </AnimatePresence>
       </div>
+
+      <SpeedInsights />
     </div>
   );
 }
